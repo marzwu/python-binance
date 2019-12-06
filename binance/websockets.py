@@ -97,6 +97,13 @@ class BinanceSocketManager(threading.Thread):
         factory.protocol = BinanceClientProtocol
         factory.callback = callback
         factory.reconnect = True
+
+        if self._client.proxy is not None:
+            _, addr = self._client.proxy['http'].split('//')
+            proxyHost, proxyPort = addr.split(":")
+            proxy = {'host': proxyHost, 'port': int(proxyPort)}
+            factory.proxy = proxy
+
         context_factory = ssl.ClientContextFactory()
 
         self._conns[path] = connectWS(factory, context_factory)
