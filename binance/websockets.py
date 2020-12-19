@@ -2,16 +2,15 @@
 
 import json
 import threading
-
 from autobahn.twisted.websocket import WebSocketClientFactory, \
     WebSocketClientProtocol, \
     connectWS
 from twisted.internet import reactor, ssl
-from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet.error import ReactorAlreadyRunning
+from twisted.internet.protocol import ReconnectingClientFactory
 
 from binance.client import Client
-
+import base64
 
 class BinanceClientProtocol(WebSocketClientProtocol):
 
@@ -33,7 +32,6 @@ class BinanceClientProtocol(WebSocketClientProtocol):
 
 
 class BinanceReconnectingClientFactory(ReconnectingClientFactory):
-
     # set initial delay to a short time
     initialDelay = 0.1
 
@@ -43,7 +41,6 @@ class BinanceReconnectingClientFactory(ReconnectingClientFactory):
 
 
 class BinanceClientFactory(WebSocketClientFactory, BinanceReconnectingClientFactory):
-
     protocol = BinanceClientProtocol
     _reconnect_error_payload = {
         'e': 'error',
@@ -62,7 +59,6 @@ class BinanceClientFactory(WebSocketClientFactory, BinanceReconnectingClientFact
 
 
 class BinanceSocketManager(threading.Thread):
-
     STREAM_URL = 'wss://stream.binance.com:9443/'
 
     WEBSOCKET_DEPTH_5 = '5'
@@ -100,9 +96,19 @@ class BinanceSocketManager(threading.Thread):
 
         if self._client.proxy is not None:
             _, addr = self._client.proxy['http'].split('//')
+
+            # index = self._client.proxy['http'].rindex('@')
+            # _, auth_info = self._client.proxy['http'][:index].split('//')
+            # addr = self._client.proxy['http'][index + 1:]
+
             proxyHost, proxyPort = addr.split(":")
             proxy = {'host': proxyHost, 'port': int(proxyPort)}
             factory.proxy = proxy
+
+            # headers = {}
+            # auth = base64.b64encode(auth_info.encode()).decode()
+            # headers["Proxy-Authorization"] = ["Basic " + auth.strip()]
+            # factory.headers = headers
 
         context_factory = ssl.ClientContextFactory()
 
@@ -569,7 +575,7 @@ class BinanceSocketManager(threading.Thread):
         # disable reconnecting if we are closing
         self._conns[conn_key].factory = WebSocketClientFactory(self.STREAM_URL + 'tmp_path')
         self._conns[conn_key].disconnect()
-        del(self._conns[conn_key])
+        del (self._conns[conn_key])
 
         # check if we have a user stream socket
         if len(conn_key) >= 60 and conn_key[:60] == self._listen_keys['user']:
