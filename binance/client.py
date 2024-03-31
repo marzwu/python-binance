@@ -9262,6 +9262,9 @@ class AsyncClient(BaseClient):
     async def futures_create_order(self, **params):
         return await self._request_futures_api('post', 'order', True, data=params)
 
+    async def futures_amend_order(self, **params):
+        return await self._request_futures_api('put', 'order', True, data=params)
+
     async def futures_place_batch_order(self, **params):
         query_string = urlencode(params)
         query_string = query_string.replace('%27', '%22')
